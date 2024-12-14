@@ -2,9 +2,16 @@ package edu.buffalo.cse.cse486586.groupmessenger2;
 
 import android.content.ContentProvider;
 import android.content.ContentValues;
+import android.content.Context;
 import android.database.Cursor;
+import android.database.MatrixCursor;
 import android.net.Uri;
 import android.util.Log;
+
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 
 /**
  * GroupMessengerProvider is a key-value table. Once again, please note that we do not implement
@@ -25,6 +32,7 @@ import android.util.Log;
  *
  */
 public class GroupMessengerProvider extends ContentProvider {
+
 
     @Override
     public int delete(Uri uri, String selection, String[] selectionArgs) {
@@ -51,6 +59,18 @@ public class GroupMessengerProvider extends ContentProvider {
          * take a look at the code for PA1.
          */
         Log.v("insert", values.toString());
+        String key = values.getAsString("key");
+        String value = values.getAsString("value");
+
+        FileOutputStream fos;
+        Context context = getContext();
+        try {
+            fos = context.openFileOutput(key, Context.MODE_PRIVATE);
+            fos.write(value.getBytes());
+            fos.close();
+        } catch (IOException e) {
+
+        }
         return uri;
     }
 
@@ -81,6 +101,24 @@ public class GroupMessengerProvider extends ContentProvider {
          * http://developer.android.com/reference/android/database/MatrixCursor.html
          */
         Log.v("query", selection);
-        return null;
+        Context context = getContext();
+        String[] COLUMN_NAME = { "key", "value" };
+        MatrixCursor resultCursor=new MatrixCursor(COLUMN_NAME);
+        StringBuilder value = new StringBuilder();
+        try {
+            int c;
+            FileInputStream fis = context.openFileInput(selection);
+            value = new StringBuilder();
+            while( (c = fis.read() ) != -1 ) {
+                value.append((char) c);
+            }
+            fis.close();
+        } catch (FileNotFoundException e) {
+
+        } catch (IOException e) {
+
+        }
+        resultCursor.addRow(new Object[] {selection, value});
+        return resultCursor;
     }
 }
